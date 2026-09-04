@@ -1,0 +1,1960 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>지점 이벤트 작성 - EVENT BUILDER</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            DEFAULT: '#008F89',
+                            dark: '#004A47',
+                            light: '#E6F4F3',
+                            hover: '#007A75'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Pretendard', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #F3F4F6; color: #111827; }
+        
+        /* 숫자 입력칸 화살표 숨김 */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] { -moz-appearance: textfield; }
+
+        /* 고밀도 슬림 입력 필드 */
+        .input-field {
+            width: 100%; height: 36px; padding: 0 12px; font-size: 13.5px;
+            border: 1px solid #D1D5DB; border-radius: 5px; outline: none;
+            background-color: #FFFFFF; transition: all 0.15s ease-in-out;
+        }
+        .input-field:focus, .input-active { 
+            border-color: #008F89 !important; 
+            box-shadow: inset 0 0 0 1px #008F89, 0 0 0 2px rgba(0, 143, 137, 0.2) !important; 
+        }
+        .input-field:disabled { background-color: #F8FAFC; color: #64748B; cursor: not-allowed; border-color: #E2E8F0; box-shadow: none !important; }
+
+        .textarea-field {
+            width: 100%; height: 36px; padding: 7px 12px; font-size: 13.5px;
+            border: 1px solid #D1D5DB; border-radius: 5px; outline: none;
+            background-color: #FFFFFF; transition: all 0.15s ease-in-out;
+            resize: none; line-height: 1.4; overflow: hidden; white-space: pre-wrap; 
+        }
+        .textarea-field:focus { 
+            border-color: #008F89 !important; 
+            box-shadow: inset 0 0 0 1px #008F89, 0 0 0 2px rgba(0, 143, 137, 0.2) !important; 
+        }
+        .textarea-field:disabled { background-color: #F8FAFC; color: #64748B; cursor: not-allowed; border-color: #E2E8F0; box-shadow: none !important; }
+
+        .input-error {
+            border-color: #EF4444 !important;
+            background-color: #FEF2F2 !important;
+        }
+        .input-error:focus {
+            box-shadow: inset 0 0 0 1px #EF4444, 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+        }
+
+        .label-text { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; display: block; }
+        .label-text .req { color: #EF4444; font-weight: 800; margin-left: 2px; }
+        .hint-text { font-size: 11px; color: #9CA3AF; margin-top: 2px; display: block; line-height: 1.2; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+
+        .preview-phone-container {
+            transition: all 0.25s ease;
+            margin: 0 auto;
+            background: #F3F4F6;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border: 1px solid #E5E7EB;
+            overflow: hidden;
+        }
+        .preview-mo { width: 320px !important; max-width: 320px !important; border-radius: 6px; }
+        .preview-pc { width: 100% !important; max-width: 480px !important; border-radius: 6px; }
+        
+        .dragging { opacity: 0.4; border: 2px dashed #008F89 !important; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans">
+
+    <header class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-50">
+        <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 bg-brand rounded-full flex items-center justify-center text-white font-bold text-xs">DE</div>
+            <div class="text-sm">
+                <span class="font-extrabold text-gray-900">닥터에버스의원</span>
+                <span class="text-gray-400 font-medium ml-1 text-xs">EVENT BUILDER</span>
+            </div>
+        </div>
+        
+        <div class="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 text-sm text-gray-500">
+            <span>이벤트 관리</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            <span class="font-semibold text-gray-900">지점 이벤트 작성</span>
+            
+            <div class="w-px h-3 bg-gray-300 mx-1.5"></div>
+            
+            <!-- 지점명 선택 드롭다운 -->
+            <div class="relative custom-select-wrapper">
+                <button type="button" onclick="toggleDropdown('globalBranchDropdown')" class="flex items-center gap-1 px-2.5 py-1 bg-white border border-gray-300 rounded text-[13px] font-bold text-brand hover:bg-gray-50 focus:border-brand focus:ring-1 focus:ring-brand transition-all shadow-sm">
+                    <span id="globalBranchText">인천점</span>
+                    <svg class="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div id="globalBranchDropdown" class="hidden absolute left-0 top-full mt-1.5 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 overflow-hidden text-gray-800 dropdown-menu">
+                    <div class="p-2 border-b border-gray-100 bg-gray-50">
+                        <div class="relative">
+                            <svg class="w-4 h-4 absolute left-2 top-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <input type="text" placeholder="지점 검색..." class="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded outline-none focus:border-brand">
+                        </div>
+                    </div>
+                    <div class="max-h-48 overflow-y-auto py-1">
+                        <div onclick="selectBranch('시흥점', 'siheung')" class="branch-option cursor-pointer px-3 py-1.5 text-[13px] hover:bg-brand-light hover:text-brand flex justify-between items-center transition-colors"><span>시흥점</span><span class="text-[10px] text-gray-400">SH</span></div>
+                        <div onclick="selectBranch('평택점', 'pyeongtaek')" class="branch-option cursor-pointer px-3 py-1.5 text-[13px] hover:bg-brand-light hover:text-brand flex justify-between items-center transition-colors"><span>평택점</span><span class="text-[10px] text-gray-400">PT</span></div>
+                        <div onclick="selectBranch('인천점', 'incheon')" class="branch-option cursor-pointer px-3 py-1.5 text-[13px] bg-brand-light text-brand font-bold flex justify-between items-center transition-colors" data-active="true"><span>인천점</span><span class="text-[10px] text-gray-400">IC</span></div>
+                        <div onclick="selectBranch('마곡점', 'magok')" class="branch-option cursor-pointer px-3 py-1.5 text-[13px] hover:bg-brand-light hover:text-brand flex justify-between items-center transition-colors"><span>마곡점</span><span class="text-[10px] text-gray-400">MG</span></div>
+                        <div onclick="selectBranch('서울대입구점', 'snu')" class="branch-option cursor-pointer px-3 py-1.5 text-[13px] hover:bg-brand-light hover:text-brand flex justify-between items-center transition-colors"><span>서울대입구점</span><span class="text-[10px] text-gray-400">SD</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div>
+            <span class="bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-full font-medium border border-gray-200">작성 중</span>
+        </div>
+    </header>
+
+    <main class="flex-1 w-full max-w-[1600px] mx-auto p-5 flex gap-6">
+        
+        <div class="flex-[6.5] flex flex-col gap-4 min-w-0">
+            
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 leading-tight">이벤트 내용 입력</h1>
+                    <p class="text-gray-500 text-sm mt-1">시술별 브랜드·옵션 가격을 입력하면 웹과 인쇄물이 동시에 생성됩니다.</p>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    
+                    <!-- 다른 지점 보기 (드롭다운) -->
+                    <div class="relative custom-select-wrapper">
+                        <button type="button" onclick="toggleDropdown('otherBranchDropdown')" class="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-300 rounded-md text-[13px] font-bold text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
+                            <span id="otherBranchBtnText">다른 지점 보기</span>
+                            <svg class="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div id="otherBranchDropdown" class="hidden absolute left-0 top-full mt-1.5 w-[150px] bg-white border border-gray-200 rounded-md shadow-lg z-50 overflow-hidden text-gray-800 dropdown-menu">
+                            <div class="max-h-60 overflow-y-auto py-1">
+                                <div onclick="resetToMyBranch()" class="cursor-pointer px-3 py-2 text-[13px] hover:bg-brand-light hover:text-brand font-bold flex items-center justify-between border-b border-gray-100 text-brand"><span>내 지점으로 원복</span></div>
+                                <div onclick="viewOtherBranch('마곡점', 'magok')" class="cursor-pointer px-3 py-2 text-[13px] hover:bg-gray-50 flex items-center gap-1 transition-colors"><span>마곡점</span><span class="text-gray-400">(MG)</span></div>
+                                <div onclick="viewOtherBranch('서울대입구점', 'snu')" class="cursor-pointer px-3 py-2 text-[13px] hover:bg-gray-50 flex items-center gap-1 transition-colors"><span>서울대입구점</span><span class="text-gray-400">(SD)</span></div>
+                                <div onclick="viewOtherBranch('노원점', 'nowon')" class="cursor-pointer px-3 py-2 text-[13px] hover:bg-gray-50 flex items-center gap-1 transition-colors"><span>노원점</span><span class="text-gray-400">(NW)</span></div>
+                                <div onclick="viewOtherBranch('일산점', 'ilsan')" class="cursor-pointer px-3 py-2 text-[13px] hover:bg-gray-50 flex items-center gap-1 transition-colors"><span>일산점</span><span class="text-gray-400">(IS)</span></div>
+                                <div onclick="viewOtherBranch('부천점', 'bucheon')" class="cursor-pointer px-3 py-2 text-[13px] hover:bg-gray-50 flex items-center gap-1 transition-colors"><span>부천점</span><span class="text-gray-400">(BC)</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="px-3 py-1.5 bg-[#FFC107] border border-transparent rounded-md text-[13px] font-bold text-[#92400E] hover:bg-[#FFB300] shadow-sm transition-colors">
+                        플친 시트
+                    </button>
+                    <button class="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-[13px] font-bold text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
+                        목록으로
+                    </button>
+                </div>
+            </div>
+
+            <!-- 타지점 예시 조회 안내 상태바 -->
+            <div id="readOnlyNotice" class="hidden bg-amber-50 border border-amber-300 rounded-lg p-3.5 flex items-center justify-between text-amber-900 shadow-sm">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <span class="text-xs font-semibold">현재 <strong id="noticeBranchName" class="underline font-bold">마곡점</strong>의 작성 내용을 예시로 보고 있습니다. (수정 불가능한 읽기 전용 상태입니다)</span>
+                </div>
+                <button onclick="resetToMyBranch()" class="px-3 py-1 bg-white border border-amber-300 rounded text-xs font-bold text-amber-800 hover:bg-amber-100 transition-colors shadow-sm shrink-0">
+                    내 지점 데이터로 돌아가기
+                </button>
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-5">
+                <div class="flex items-center gap-2 mb-5">
+                    <div class="w-6 h-6 rounded-full bg-brand text-white flex items-center justify-center text-sm font-bold">1</div>
+                    <h2 class="text-lg font-bold text-gray-900">이벤트 기본정보</h2>
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <!-- 첫번째 줄: 이벤트명 / 이벤트 URL / VAT -->
+                    <div class="flex gap-4">
+                        <div class="flex-[5] min-w-0">
+                            <label class="label-text">이벤트명 <span class="req">*</span></label>
+                            <input type="text" class="input-field bg-[#F8FAFC] border-[#E2E8F0] text-gray-800 font-medium shadow-sm" value="여름 방사! 에버스가 할인 쏜다!" disabled>
+                        </div>
+                        <div class="flex-[5] min-w-0">
+                            <label class="label-text">이벤트 URL</label>
+                            <div class="flex gap-1.5">
+                                <input type="text" id="eventUrl" class="input-field bg-[#F8FAFC] border-[#E2E8F0] flex-1 min-w-0 text-gray-800 font-medium shadow-sm px-2.5" value="https://incheon.drevers.com/event/monthly" disabled>
+                                <button onclick="copyUrl()" class="px-3 py-0 h-[36px] border border-gray-300 bg-white rounded-[5px] text-[13px] font-bold hover:bg-gray-50 flex items-center gap-1 shrink-0 transition-colors shadow-sm">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> 복사
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex-[2] min-w-0 relative custom-select-wrapper" id="taxSelectWrapper">
+                            <label class="label-text">기본 VAT 표기</label>
+                            <button type="button" onclick="toggleTaxDropdown()" id="taxSelectBtn" class="input-field flex items-center justify-between w-full bg-white cursor-pointer hover:bg-gray-50 text-sm text-gray-900 shadow-sm">
+                                <span id="taxSelectedText">VAT 포함</span>
+                                <svg id="taxSelectChevron" class="w-4 h-4 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <div id="taxDropdownMenu" class="hidden absolute left-0 top-full mt-1 w-full bg-[#F8FAFC] border border-gray-300 rounded-md shadow-lg z-50 p-1 dropdown-menu">
+                                <div onclick="selectTaxOption('포함')" class="tax-option cursor-pointer flex justify-between items-center px-3 py-2 rounded bg-white font-medium text-[#111827] text-sm" data-value="포함">
+                                    <span>VAT 포함</span>
+                                    <svg class="w-4 h-4 check-icon block text-[#111827]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                </div>
+                                <div onclick="selectTaxOption('별도')" class="tax-option cursor-pointer flex justify-between items-center px-3 py-2 rounded text-gray-700 hover:bg-gray-200/50 mt-1 text-sm" data-value="별도">
+                                    <span>VAT 별도</span>
+                                    <svg class="w-4 h-4 check-icon hidden text-[#111827]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 두번째 줄: 이벤트 기간 / 마감 / 업로드 시간 / 플친 발송 -->
+                    <div class="flex gap-3">
+                        <div class="flex-[1.4] min-w-0">
+                            <label class="label-text">이벤트 기간 <span class="req">*</span></label>
+                            <div class="flex items-center gap-1.5">
+                                <input type="text" class="input-field bg-[#F8FAFC] border-[#E2E8F0] text-gray-800 font-medium text-center shadow-sm flex-1 min-w-0 px-1 text-[13px]" value="2026-07-01" disabled>
+                                <span class="text-gray-400 font-medium text-sm">~</span>
+                                <input type="text" class="input-field bg-[#F8FAFC] border-[#E2E8F0] text-gray-800 font-medium text-center shadow-sm flex-1 min-w-0 px-1 text-[13px]" value="2026-07-31" disabled>
+                            </div>
+                        </div>
+                        <div class="flex-[1] min-w-0">
+                            <label class="label-text">마감</label>
+                            <div class="input-field bg-[#F8FAFC] border-[#E2E8F0] flex items-center justify-center px-2 text-gray-800 font-medium shadow-sm cursor-not-allowed">
+                                <span class="whitespace-nowrap text-[13px] tracking-tight">2026.09.03 10:00</span>
+                                <span id="deadlineDdayTag" class="text-[#EF4444] font-bold text-[12px] whitespace-nowrap ml-1"></span>
+                            </div>
+                        </div>
+                        <div class="flex-[1] min-w-0">
+                            <label class="label-text">업로드 시간</label>
+                            <div class="input-field bg-[#F8FAFC] border-[#E2E8F0] flex items-center justify-center px-2 text-gray-800 font-medium shadow-sm cursor-not-allowed">
+                                <span class="whitespace-nowrap text-[13px] tracking-tight">2026.09.11 15:30</span>
+                            </div>
+                        </div>
+                        <div class="flex-[1] min-w-0">
+                            <label class="label-text">플친 발송</label>
+                            <div class="input-field bg-[#F8FAFC] border-[#E2E8F0] flex items-center justify-center px-2 text-gray-800 font-medium shadow-sm cursor-not-allowed">
+                                <span class="whitespace-nowrap text-[13px] tracking-tight">2026.09.11 16:30</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mt-2 mb-1">
+                <div class="flex items-center gap-3">
+                    <div class="w-6 h-6 rounded-full bg-brand text-white flex items-center justify-center text-sm font-bold">2</div>
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">카테고리·시술 입력</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button onclick="toggleAll(false)" class="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-[13px] font-bold text-gray-600 hover:bg-gray-50 shadow-sm">전체 접기</button>
+                    <button onclick="toggleAll(true)" class="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-[13px] font-bold text-gray-600 hover:bg-gray-50 shadow-sm">전체 펼치기</button>
+                    <div class="w-px h-5 bg-gray-300 mx-1"></div>
+                    <button id="addCategoryBtn" onclick="addCategory()" class="flex items-center gap-1.5 px-3 py-1.5 bg-brand text-white rounded-md text-[13px] font-bold hover:bg-brand-hover shadow-sm transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        카테고리 추가
+                    </button>
+                </div>
+            </div>
+
+            <div id="categoryContainer" class="flex flex-col gap-4"></div>
+
+            <button id="bottomAddCategoryBtn" onclick="addCategory()" class="w-full py-2.5 border border-dashed border-gray-300 rounded-md text-[13px] font-bold text-gray-500 hover:border-brand hover:text-brand hover:bg-brand-light/20 bg-white flex items-center justify-center gap-1.5 transition-colors shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                새 카테고리 추가
+            </button>
+            <div class="h-10"></div>
+        </div>
+
+        <div class="flex-[3.5] flex flex-col gap-4 sticky top-20 h-[calc(100vh-6rem)]">
+            
+            <!-- 원본 크기 임시 저장 / 게시 전 검수 버튼 (우측 상단 위치) -->
+            <div class="flex items-center justify-end gap-2 shrink-0">
+                <button id="tempSaveBtn" onclick="saveTemp()" class="flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 rounded-md text-[13px] font-bold bg-white hover:bg-gray-50 text-gray-700 transition-colors shrink-0 shadow-sm">
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    <span>임시 저장</span>
+                </button>
+                <button id="mainActionBtn" onclick="inspectData()" class="flex items-center gap-1.5 px-3 py-1.5 bg-gray-500 text-white rounded-md text-[13px] font-bold hover:bg-gray-600 transition-colors shrink-0 shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <span>게시 전 검수</span>
+                </button>
+            </div>
+
+            <!-- 검수 상태 및 오류 목록 박스 -->
+            <div id="statusBox" class="bg-white border border-green-200 rounded-lg shadow-sm p-4 flex flex-col transition-all gap-2 shrink-0">
+                <div class="flex items-center justify-between w-full">
+                    <div class="flex items-center gap-3">
+                        <div id="statusIcon">
+                            <svg class="w-6 h-6 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div>
+                            <p id="statusTitle" class="text-sm font-bold text-gray-900">필수값 입력 완료</p>
+                            <p id="statusDesc" class="text-xs text-gray-500 mt-0.5">게시 및 인쇄 출력이 가능합니다.</p>
+                        </div>
+                    </div>
+                    <button id="statusInspectBtn" onclick="publishEvent()" class="px-4 py-1.5 border border-brand bg-brand rounded-md text-white text-[13px] font-bold hover:bg-brand-hover shadow-sm shrink-0">검수 완료</button>
+                </div>
+                <div id="errorListContainer" class="hidden border-t border-red-200 pt-2 mt-1 flex flex-col gap-1 max-h-32 overflow-y-auto custom-scrollbar"></div>
+            </div>
+
+            <!-- 미리보기 박스 -->
+            <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-3.5 flex flex-col flex-1 min-h-0">
+                <div class="flex justify-between items-center mb-3 shrink-0">
+                    <div class="flex bg-gray-100 p-1 rounded-md text-xs">
+                        <button id="btnWebTab" onclick="setRenderMode('web')" class="px-4 py-1.5 font-bold bg-white text-gray-900 rounded-md shadow-sm">웹 미리보기</button>
+                        <button id="btnPrintTab" onclick="setRenderMode('print')" class="px-4 py-1.5 font-medium text-gray-500 hover:text-gray-900">인쇄 (A4) 미리보기</button>
+                    </div>
+                    <div id="deviceToggleGroup" class="flex gap-1.5 text-xs">
+                        <button id="btnMO" onclick="setDeviceMode('MO')" class="px-3 py-1.5 font-bold bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors">Mobile</button>
+                        <button id="btnPC" onclick="setDeviceMode('PC')" class="px-3 py-1.5 font-bold bg-brand text-white rounded-md transition-colors shadow-sm">PC</button>
+                    </div>
+                </div>
+
+                <div class="bg-gray-100 flex-1 rounded-md border border-gray-200 p-3 overflow-y-auto custom-scrollbar flex justify-center items-start">
+                    <div id="previewContainer" class="preview-phone-container preview-pc flex flex-col font-sans bg-white my-auto">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let myBranchState = {
+            eventName: "여름 방사! 에버스가 할인 쏜다!",
+            branchName: "인천점",
+            startDate: "2026-07-01",
+            endDate: "2026-07-31",
+            deadlineDate: "2026-09-03T10:00:00",
+            renderMode: "web",
+            deviceMode: "PC",
+            taxType: "포함",
+            isReadOnly: false,
+            categories: [
+                {
+                    id: 1, name: "레이저 리프팅", type: "일반 카테고리", isCollapsed: true,
+                    benefitType: "추가 문구", benefitCondition: "동일 부위 10회 이상 결제 시", benefitText: "+스킨부스터 더 드림", benefitDiscount: 20, isBenefitCollapsed: true,
+                    treatments: [
+                        {
+                            id: 101, name: "인모드 FX", desc: "원하는 부위 수에 맞춰 선택해 주세요.", isCollapsed: true,
+                            benefitCond: "", benefitText: "",
+                            options: [
+                                { id: 1001, name: "인모드 FX 1부위", price1: 70000, finalPrice: 56000, priceType: "더블 할인", benefitCond: "", benefitText: "" },
+                                { id: 1002, name: "인모드 FX 3부위", price1: 175000, finalPrice: 140000, priceType: "더블 할인", benefitCond: "", benefitText: "" }
+                            ]
+                        },
+                        {
+                            id: 102, name: "올리지오", desc: "탄력 개선 리프팅", isCollapsed: true,
+                            benefitCond: "", benefitText: "",
+                            options: [
+                                { id: 1003, name: "올리지오 630샷", price1: 550000, finalPrice: 440000, priceType: "더블 할인", benefitEnabled: true, benefitCond: "포텐자 펌핑팁 변경 시", benefitText: "+스킨부스터 더 드림" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: 2, name: "8가지 시술 골라잡기", type: "가격형 카테고리", isCollapsed: true, catPrice: 88000, catTaxType: "별도",
+                    benefitType: "추가 문구", benefitCondition: "", benefitText: "", benefitDiscount: 0, isBenefitCollapsed: true,
+                    treatments: [
+                        { id: 201, name: "주름보톡스 3부위(제오민)", desc: "", isCollapsed: true, benefitCond: "", benefitText: "" },
+                        { id: 202, name: "얼굴전체 스킨보톡스(국산)+히알리에(2.5cc)", desc: "", isCollapsed: true, benefitCond: "", benefitText: "" },
+                        { id: 203, name: "사각턱보톡스 50유닛+윤곽주사 업그레이딩", desc: "", isCollapsed: true, benefitCond: "", benefitText: "" }
+                    ]
+                }
+            ]
+        };
+
+        const otherBranchSamples = {
+            '마곡점': [
+                {
+                    id: 901, name: "[마곡] 색소/토닝 특가", type: "일반 카테고리", isCollapsed: true,
+                    benefitType: "추가 문구", benefitCondition: "평일 오전 방문 시", benefitText: "+모델링팩 서비스", benefitDiscount: 0, isBenefitCollapsed: true,
+                    treatments: [
+                        {
+                            id: 9101, name: "피코토닝 5회 패키지", desc: "잡티 및 피부톤 개선", isCollapsed: true,
+                            options: [
+                                { id: 91001, name: "피코토닝 5회 + 비타민 관리", price1: 300000, finalPrice: 240000, priceType: "더블 할인" }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        let appState = myBranchState;
+
+        window.onload = function() {
+            updateDeadlineDday();
+            renderEditor();
+            renderPreview();
+            validateAllData();
+        };
+
+        function updateDeadlineDday() {
+            const deadlineEl = document.getElementById('deadlineDdayTag');
+            if (!deadlineEl) return;
+
+            const targetDate = new Date(appState.deadlineDate);
+            const now = new Date();
+
+            const targetZero = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+            const nowZero = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
+            const diffTime = targetZero - nowZero;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (now > targetDate) {
+                deadlineEl.innerText = "(마감됨)";
+                deadlineEl.className = "text-gray-400 font-bold text-[12px] whitespace-nowrap ml-1";
+            } else if (diffDays === 0) {
+                deadlineEl.innerText = "(D-Day)";
+                deadlineEl.className = "text-[#EF4444] font-bold text-[12px] whitespace-nowrap ml-1";
+            } else if (diffDays > 0) {
+                deadlineEl.innerText = `(D-${diffDays})`;
+                deadlineEl.className = "text-[#EF4444] font-bold text-[12px] whitespace-nowrap ml-1";
+            } else {
+                deadlineEl.innerText = `(D+${Math.abs(diffDays)})`;
+                deadlineEl.className = "text-gray-500 font-bold text-[12px] whitespace-nowrap ml-1";
+            }
+        }
+
+        function toggleCatBenefitAccordion(catId) {
+            const cat = appState.categories.find(c => c.id === catId);
+            if(cat) {
+                cat.isBenefitCollapsed = !cat.isBenefitCollapsed;
+                renderEditor();
+            }
+        }
+
+        function viewOtherBranch(branchName, branchCode) {
+            const sampleCats = otherBranchSamples[branchName] || otherBranchSamples['마곡점'];
+            
+            appState = {
+                ...myBranchState,
+                branchName: branchName,
+                isReadOnly: true,
+                categories: JSON.parse(JSON.stringify(sampleCats))
+            };
+
+            document.getElementById('readOnlyNotice').classList.remove('hidden');
+            document.getElementById('noticeBranchName').innerText = branchName;
+            document.getElementById('otherBranchBtnText').innerText = branchName + " (예시)";
+            
+            disableEditingButtons(true);
+            toggleDropdown('otherBranchDropdown');
+
+            renderEditor();
+            renderPreview();
+            validateAllData();
+        }
+
+        function resetToMyBranch() {
+            appState = myBranchState;
+            appState.isReadOnly = false;
+
+            document.getElementById('readOnlyNotice').classList.add('hidden');
+            document.getElementById('otherBranchBtnText').innerText = "다른 지점 보기";
+
+            disableEditingButtons(false);
+            if(!document.getElementById('otherBranchDropdown').classList.contains('hidden')) {
+                toggleDropdown('otherBranchDropdown');
+            }
+
+            renderEditor();
+            renderPreview();
+            validateAllData();
+        }
+
+        function disableEditingButtons(disabled) {
+            const addCatBtn = document.getElementById('addCategoryBtn');
+            const bottomAddCatBtn = document.getElementById('bottomAddCategoryBtn');
+            const tempSaveBtn = document.getElementById('tempSaveBtn');
+
+            if(disabled) {
+                if(addCatBtn) addCatBtn.classList.add('opacity-50', 'pointer-events-none');
+                if(bottomAddCatBtn) bottomAddCatBtn.classList.add('opacity-50', 'pointer-events-none');
+                if(tempSaveBtn) tempSaveBtn.classList.add('opacity-50', 'pointer-events-none');
+            } else {
+                if(addCatBtn) addCatBtn.classList.remove('opacity-50', 'pointer-events-none');
+                if(bottomAddCatBtn) bottomAddCatBtn.classList.remove('opacity-50', 'pointer-events-none');
+                if(tempSaveBtn) tempSaveBtn.classList.remove('opacity-50', 'pointer-events-none');
+            }
+        }
+
+        function autoResize(el) {
+            el.style.height = '36px'; 
+            el.style.height = el.scrollHeight + 'px'; 
+        }
+
+        function formatNumberWithComma(val) {
+            if (val === undefined || val === null || val === '') return '';
+            let cleanNum = String(val).replace(/[^0-9]/g, '');
+            if (!cleanNum) return '';
+            return Number(cleanNum).toLocaleString();
+        }
+
+        function parseNumberFromComma(str) {
+            if (!str) return '';
+            let cleanNum = String(str).replace(/[^0-9]/g, '');
+            return cleanNum === '' ? '' : Number(cleanNum);
+        }
+
+        let isTaxDropdownOpen = false;
+
+        function toggleTaxDropdown() {
+            if(appState.isReadOnly) return;
+            const menu = document.getElementById('taxDropdownMenu');
+            const chevron = document.getElementById('taxSelectChevron');
+            const btn = document.getElementById('taxSelectBtn');
+            isTaxDropdownOpen = !isTaxDropdownOpen;
+            
+            if (isTaxDropdownOpen) {
+                menu.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
+                btn.classList.add('input-active');
+            } else {
+                menu.classList.add('hidden');
+                chevron.classList.remove('rotate-180');
+                btn.classList.remove('input-active');
+            }
+        }
+
+        function toggleDropdown(menuId) {
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                if (menu.id !== menuId && !menu.classList.contains('hidden')) {
+                    menu.classList.add('hidden');
+                    if(menu.previousElementSibling) {
+                        menu.previousElementSibling.classList.remove('input-active');
+                        if(menu.previousElementSibling.querySelector('svg')) {
+                            menu.previousElementSibling.querySelector('svg').classList.remove('rotate-180');
+                        }
+                    }
+                }
+            });
+
+            const menu = document.getElementById(menuId);
+            if(!menu) return;
+            const btn = menu.previousElementSibling;
+            const chevron = btn ? btn.querySelector('svg') : null;
+
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                if(btn) btn.classList.add('input-active');
+                if(chevron) chevron.classList.add('rotate-180');
+            } else {
+                menu.classList.add('hidden');
+                if(btn) btn.classList.remove('input-active');
+                if(chevron) chevron.classList.remove('rotate-180');
+            }
+        }
+
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.custom-select-wrapper')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.classList.add('hidden');
+                    if(menu.previousElementSibling) {
+                        menu.previousElementSibling.classList.remove('input-active');
+                        if(menu.previousElementSibling.querySelector('svg')) {
+                            menu.previousElementSibling.querySelector('svg').classList.remove('rotate-180');
+                        }
+                    }
+                });
+            }
+        });
+
+        function selectBranch(branchName, branchCode) {
+            if(appState.isReadOnly) return;
+            appState.branchName = branchName;
+            document.getElementById('globalBranchText').innerText = branchName;
+            
+            const options = document.querySelectorAll('.branch-option');
+            options.forEach(opt => {
+                if(opt.innerText.includes(branchName)) {
+                    opt.className = "branch-option cursor-pointer px-3 py-1.5 text-[13px] bg-brand-light text-brand font-bold flex justify-between items-center transition-colors";
+                } else {
+                    opt.className = "branch-option cursor-pointer px-3 py-1.5 text-[13px] hover:bg-brand-light hover:text-brand flex justify-between items-center transition-colors";
+                }
+            });
+            
+            const urlInput = document.getElementById('eventUrl');
+            if(urlInput) {
+                urlInput.value = `https://${branchCode}.drevers.com/event/monthly`;
+            }
+            
+            toggleDropdown('globalBranchDropdown');
+            renderPreview();
+        }
+
+        function selectTaxOption(value) {
+            if(appState.isReadOnly) return;
+            appState.taxType = value; 
+            const textSpan = document.getElementById('taxSelectedText');
+            textSpan.innerText = 'VAT ' + value;
+            
+            const options = document.querySelectorAll('.tax-option');
+            options.forEach(opt => {
+                const checkIcon = opt.querySelector('.check-icon');
+                if (opt.dataset.value === value) {
+                    opt.classList.add('bg-white', 'font-medium', 'text-[#111827]');
+                    opt.classList.remove('text-gray-700', 'hover:bg-gray-200/50');
+                    checkIcon.classList.remove('hidden');
+                    checkIcon.classList.add('block');
+                } else {
+                    opt.classList.remove('bg-white', 'font-medium', 'text-[#111827]');
+                    opt.classList.add('text-gray-700', 'hover:bg-gray-200/50');
+                    checkIcon.classList.add('hidden');
+                    checkIcon.classList.remove('block');
+                }
+            });
+            renderPreview();
+            toggleDropdown('taxDropdownMenu');
+        }
+
+        function copyUrl() { alert("이벤트 URL이 클립보드에 복사되었습니다!"); }
+        function saveTemp() { 
+            if(appState.isReadOnly) return;
+            alert("입력 내용이 임시 저장되었습니다."); 
+        }
+
+        function publishEvent() {
+            if(appState.isReadOnly) {
+                alert("현재 읽기 전용 상태입니다. 내 지점 데이터로 돌아가서 작성해 주세요.");
+                return;
+            }
+            if(!validateAllData()) {
+                alert("입력 오류 항목을 확인 후 다시 시도해주세요.");
+                return;
+            }
+            alert("이벤트가 성공적으로 게시되었습니다!");
+        }
+
+        function inspectData() {
+            if (validateAllData()) {
+                alert("검수 결과 이상이 없습니다. 게시가 가능합니다.");
+            } else {
+                alert("수정이 필요한 오류 항목이 있습니다. 에러 리스트를 확인해주세요.");
+            }
+        }
+
+        function validateAllData() {
+            let errorList = [];
+
+            appState.categories.forEach((cat, cIdx) => {
+                const catName = cat.name || `카테고리 0${cIdx + 1}`;
+                if (!cat.name || cat.name.trim() === '') {
+                    errorList.push(`[${catName}] 카테고리명 미입력`);
+                }
+
+                if (cat.type === '가격형 카테고리') {
+                    if (cat.catPrice === '' || cat.catPrice === undefined || isNaN(cat.catPrice)) {
+                        errorList.push(`[${catName}] 카테고리 할인가 미입력`);
+                    }
+                }
+
+                if (cat.treatments) {
+                    cat.treatments.forEach((treat, tIdx) => {
+                        const treatName = treat.name || `시술 0${tIdx + 1}`;
+                        if (!treat.name || treat.name.trim() === '') {
+                            errorList.push(`[${catName} > ${treatName}] 시술명 미입력`);
+                        }
+
+                        if (cat.type === '일반 카테고리' && treat.options) {
+                            treat.options.forEach((opt, oIdx) => {
+                                const optName = opt.name || `옵션 ${oIdx + 1}`;
+                                if (!opt.name || opt.name.trim() === '') {
+                                    errorList.push(`[${catName} > ${treatName} > ${optName}] 옵션명 미입력`);
+                                }
+
+                                if (opt.priceType !== '원내 문의') {
+                                    if (opt.finalPrice === '' || opt.finalPrice === undefined || isNaN(opt.finalPrice)) {
+                                        errorList.push(`[${catName} > ${treatName} > ${optName}] 최종가 미입력`);
+                                    }
+                                    if (opt.priceType === '더블 할인') {
+                                        if (opt.price1 === '' || opt.price1 === undefined || isNaN(opt.price1)) {
+                                            errorList.push(`[${catName} > ${treatName} > ${optName}] 1차 할인가 미입력`);
+                                        } else if (opt.price1 <= opt.finalPrice) {
+                                            errorList.push(`[${catName} > ${treatName} > ${optName}] 1차 할인가는 최종가보다 커야함`);
+                                        } else {
+                                            let disc = Math.round(((opt.price1 - opt.finalPrice) / opt.price1) * 100);
+                                            if (disc > 34) {
+                                                errorList.push(`[${catName} > ${treatName} > ${optName}] 추가 할인율(최대 34%) 초과`);
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
+            const statusBox = document.getElementById('statusBox');
+            const statusIcon = document.getElementById('statusIcon');
+            const statusTitle = document.getElementById('statusTitle');
+            const statusDesc = document.getElementById('statusDesc');
+            const errorListContainer = document.getElementById('errorListContainer');
+            
+            const mainActionBtn = document.getElementById('mainActionBtn');
+            const statusInspectBtn = document.getElementById('statusInspectBtn');
+
+            if (appState.isReadOnly) {
+                statusBox.className = "bg-amber-50 border border-amber-300 rounded-lg shadow-sm p-4 flex flex-col transition-all gap-2 shrink-0";
+                statusIcon.innerHTML = `<svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>`;
+                statusTitle.className = "text-[14px] font-bold text-amber-900";
+                statusTitle.innerText = "타 지점 읽기 전용 상태";
+                statusDesc.className = "text-[11.5px] text-amber-700 mt-0.5";
+                statusDesc.innerText = "예시로 조회를 실행 중입니다.";
+                errorListContainer.classList.add('hidden');
+                return true;
+            }
+
+            if (errorList.length > 0) {
+                statusBox.className = "bg-red-50 border border-red-300 rounded-lg shadow-sm p-4 flex flex-col transition-all gap-2 shrink-0";
+                statusIcon.innerHTML = `<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                statusTitle.className = "text-[14px] font-bold text-red-900";
+                statusTitle.innerText = "입력 오류 확인 필요";
+                statusDesc.className = "text-[11.5px] text-red-600 font-medium mt-0.5";
+                statusDesc.innerText = `수정 필요 항목 ${errorList.length}건`;
+
+                errorListContainer.classList.remove('hidden');
+                errorListContainer.innerHTML = errorList.map(err => `
+                    <div class="flex items-start gap-1 text-xs text-red-700 font-medium leading-tight">
+                        <span class="text-red-500 font-bold shrink-0">•</span>
+                        <span>${err}</span>
+                    </div>
+                `).join('');
+                
+                if(mainActionBtn) {
+                    mainActionBtn.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>게시 전 검수</span>
+                    `;
+                    mainActionBtn.className = "flex items-center gap-1.5 px-3 py-1.5 bg-gray-500 text-white rounded-md text-[13px] font-bold hover:bg-gray-600 transition-colors shrink-0 shadow-sm";
+                    mainActionBtn.onclick = inspectData;
+                }
+                
+                if(statusInspectBtn) {
+                    statusInspectBtn.innerText = "검수 재실행";
+                    statusInspectBtn.className = "px-4 py-1.5 border border-red-300 bg-white text-red-700 rounded-md text-[13px] font-bold hover:bg-red-50 shadow-sm shrink-0";
+                    statusInspectBtn.onclick = inspectData;
+                }
+
+            } else {
+                statusBox.className = "bg-white border border-green-200 rounded-lg shadow-sm p-4 flex flex-col transition-all gap-2 shrink-0";
+                statusIcon.innerHTML = `<svg class="w-6 h-6 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                statusTitle.className = "text-[14px] font-bold text-gray-900";
+                statusTitle.innerText = "필수값 입력 완료";
+                statusDesc.className = "text-[11.5px] text-gray-500 mt-0.5";
+                statusDesc.innerText = "게시 및 인쇄 출력이 가능합니다.";
+
+                errorListContainer.classList.add('hidden');
+                errorListContainer.innerHTML = '';
+                
+                if(mainActionBtn) {
+                    mainActionBtn.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>게시하기</span>
+                    `;
+                    mainActionBtn.className = "flex items-center gap-1.5 px-3 py-1.5 bg-brand text-white rounded-md text-[13px] font-bold hover:bg-brand-hover transition-colors shrink-0 shadow-md";
+                    mainActionBtn.onclick = publishEvent;
+                }
+                
+                if(statusInspectBtn) {
+                    statusInspectBtn.innerText = "검수 완료"; 
+                    statusInspectBtn.className = "px-4 py-1.5 border border-brand bg-brand rounded-md text-white text-[13px] font-bold hover:bg-brand-hover shadow-sm shrink-0";
+                    statusInspectBtn.onclick = publishEvent;
+                }
+            }
+
+            return errorList.length === 0;
+        }
+
+        function setRenderMode(mode) {
+            appState.renderMode = mode;
+            const btnWeb = document.getElementById('btnWebTab');
+            const btnPrint = document.getElementById('btnPrintTab');
+            const deviceGroup = document.getElementById('deviceToggleGroup');
+
+            if (mode === 'print') {
+                btnWeb.className = "px-4 py-1.5 font-medium text-gray-500 hover:text-gray-900";
+                btnPrint.className = "px-4 py-1.5 font-bold bg-white text-gray-900 rounded-md shadow-sm";
+                deviceGroup.style.display = 'none';
+            } else {
+                btnWeb.className = "px-4 py-1.5 font-bold bg-white text-gray-900 rounded-md shadow-sm";
+                btnPrint.className = "px-4 py-1.5 font-medium text-gray-500 hover:text-gray-900";
+                deviceGroup.style.display = 'flex';
+            }
+            renderPreview();
+        }
+
+        function setDeviceMode(mode) {
+            appState.deviceMode = mode;
+            renderPreview();
+        }
+
+        function updateStatePreviewOnly(level, ids, field, val) {
+            if(appState.isReadOnly) return;
+            const [cId, tId, oId] = ids;
+            const cat = appState.categories.find(c => c.id === cId);
+            if(!cat) return;
+
+            if (level === 'cat') cat[field] = val;
+            else if (level === 'treat') {
+                const treat = cat.treatments.find(t => t.id === tId);
+                if(treat) treat[field] = val;
+            } else if (level === 'opt') {
+                const treat = cat.treatments.find(t => t.id === tId);
+                if(treat) {
+                    const opt = treat.options.find(o => o.id === oId);
+                    if(opt) opt[field] = val;
+                }
+            }
+            renderPreview();
+            validateAllData();
+        }
+
+        function updateStateAndRenderAll(level, ids, field, val) {
+            if(appState.isReadOnly) return;
+            updateStatePreviewOnly(level, ids, field, val);
+            renderEditor();
+        }
+
+        function updateCatPriceInput(catId, inputEl) {
+            if(appState.isReadOnly) return;
+            const rawVal = parseNumberFromComma(inputEl.value);
+            inputEl.value = formatNumberWithComma(rawVal);
+
+            const cat = appState.categories.find(c => c.id === catId);
+            if(cat) cat.catPrice = rawVal;
+
+            renderEditor();
+            renderPreview();
+            validateAllData();
+        }
+
+        function updateOptionPriceInput(cId, tId, oId, field, inputEl) {
+            if(appState.isReadOnly) return;
+            const rawVal = parseNumberFromComma(inputEl.value);
+            inputEl.value = formatNumberWithComma(rawVal);
+
+            const cat = appState.categories.find(c => c.id === cId);
+            const treat = cat.treatments.find(t => t.id === tId);
+            const opt = treat.options.find(o => o.id === oId);
+
+            opt[field] = rawVal;
+
+            if (opt.priceType === '일반 할인' && field === 'finalPrice') {
+                renderEditor();
+                renderPreview();
+                validateAllData();
+                return;
+            }
+
+            if (opt.priceType === '더블 할인' && opt.price1 !== '' && opt.finalPrice !== '' && opt.price1 !== undefined && opt.finalPrice !== undefined) {
+                if (opt.price1 <= opt.finalPrice) {
+                    alert("1차 할인가는 최종 할인가보다 높아야 합니다.");
+                    opt[field] = '';
+                    inputEl.value = '';
+                    renderEditor();
+                    renderPreview();
+                    validateAllData();
+                    return;
+                }
+
+                let discountRate = Math.round(((opt.price1 - opt.finalPrice) / opt.price1) * 100);
+                if (discountRate > 34) {
+                    alert("추가 할인은 최대 34%까지만 가능합니다. 1차 할인가 또는 최종 할인가를 다시 작성해주세요.");
+                    opt[field] = '';
+                    inputEl.value = '';
+                    renderEditor();
+                    renderPreview();
+                    validateAllData();
+                    return;
+                }
+            }
+
+            renderEditor();
+            renderPreview();
+            validateAllData();
+        }
+
+        function toggleCategory(catId) {
+            const cat = appState.categories.find(c => c.id === catId);
+            if(cat) { cat.isCollapsed = !cat.isCollapsed; renderEditor(); }
+        }
+
+        function toggleTreatment(catId, treatId) {
+            const cat = appState.categories.find(c => c.id === catId);
+            if(cat) {
+                const treat = cat.treatments.find(t => t.id === treatId);
+                if(treat) { treat.isCollapsed = !treat.isCollapsed; renderEditor(); }
+            }
+        }
+
+        let draggedType = null;
+        let draggedData = null;
+
+        function handleDragStart(e, type, catId, index) {
+            if(appState.isReadOnly) return;
+            e.stopPropagation();
+            draggedType = type;
+            draggedData = { catId, index };
+            const el = e.currentTarget.closest('[draggable="true"]');
+            if (el) el.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragOver(e) {
+            if(appState.isReadOnly) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDrop(e, type, catId, targetIndex) {
+            if(appState.isReadOnly) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (!draggedData || draggedType !== type) return;
+
+            if (type === 'category') {
+                const [movedCat] = appState.categories.splice(draggedData.index, 1);
+                appState.categories.splice(targetIndex, 0, movedCat);
+            } else if (type === 'treatment') {
+                if (draggedData.catId !== catId) return;
+                const cat = appState.categories.find(c => c.id === catId);
+                if (cat && cat.treatments) {
+                    const [movedTreat] = cat.treatments.splice(draggedData.index, 1);
+                    cat.treatments.splice(targetIndex, 0, movedTreat);
+                }
+            }
+
+            draggedData = null;
+            draggedType = null;
+            renderEditor();
+            renderPreview();
+        }
+
+        function handleDragEnd(e) {
+            const el = e.currentTarget.closest('[draggable="true"]');
+            if (el) el.classList.remove('dragging');
+            draggedData = null;
+            draggedType = null;
+        }
+
+        function toggleAll(expand) {
+            appState.categories.forEach(cat => {
+                cat.isCollapsed = !expand;
+                if(cat.treatments) cat.treatments.forEach(t => t.isCollapsed = !expand);
+            });
+            renderEditor();
+        }
+
+        function copyCategory(catId) {
+            if(appState.isReadOnly) return;
+            const index = appState.categories.findIndex(c => c.id === catId);
+            if (index === -1) return;
+            const target = appState.categories[index];
+            const copied = JSON.parse(JSON.stringify(target));
+            copied.id = Date.now();
+            copied.name = copied.name + " (복사본)";
+            
+            if (copied.treatments) {
+                copied.treatments.forEach((t, tIdx) => {
+                    t.id = Date.now() + tIdx + 1;
+                    if (t.options) {
+                        t.options.forEach((o, oIdx) => {
+                            o.id = Date.now() + 100 + oIdx + 1;
+                        });
+                    }
+                });
+            }
+            appState.categories.splice(index + 1, 0, copied);
+            renderEditor();
+            renderPreview();
+            validateAllData();
+        }
+
+        function addCategory() {
+            if(appState.isReadOnly) return;
+            appState.categories.push({
+                id: Date.now(), name: "신규 카테고리", type: "일반 카테고리", isCollapsed: true,
+                benefitType: "추가 문구", benefitCondition: "", benefitText: "", benefitDiscount: 0, isBenefitCollapsed: true, treatments: [],
+                catPrice: 0, catTaxType: "별도"
+            });
+            renderEditor(); renderPreview(); validateAllData();
+        }
+
+        function deleteCategory(catId) {
+            if(appState.isReadOnly) return;
+            if (confirm("이 카테고리를 삭제하시겠습니까?")) {
+                appState.categories = appState.categories.filter(c => c.id !== catId);
+                renderEditor(); renderPreview(); validateAllData();
+            }
+        }
+
+        function addTreatment(catId) {
+            if(appState.isReadOnly) return;
+            const cat = appState.categories.find(c => c.id === catId);
+            if(cat) {
+                cat.treatments.push({
+                    id: Date.now(), name: "새 시술 항목", desc: "", isCollapsed: true,
+                    options: cat.type === '일반 카테고리' ? [{ id: Date.now() + 1, name: "기본 옵션", price1: 50000, finalPrice: 50000, priceType: "더블 할인", benefitCond: "", benefitText: "" }] : []
+                });
+                renderEditor(); renderPreview(); validateAllData();
+            }
+        }
+
+        function deleteTreatment(catId, treatId) {
+            if(appState.isReadOnly) return;
+            if (confirm("이 시술을 삭제하시겠습니까?")) {
+                const cat = appState.categories.find(c => c.id === catId);
+                if(cat) {
+                    cat.treatments = cat.treatments.filter(t => t.id !== treatId);
+                    renderEditor(); renderPreview(); validateAllData();
+                }
+            }
+        }
+
+        function addOption(catId, treatId) {
+            if(appState.isReadOnly) return;
+            const cat = appState.categories.find(c => c.id === catId);
+            if(cat) {
+                const treat = cat.treatments.find(t => t.id === treatId);
+                if(treat) {
+                    treat.options.push({ id: Date.now(), name: "추가 옵션", price1: 10000, finalPrice: 10000, priceType: "더블 할인", benefitCond: "", benefitText: "" });
+                    renderEditor(); renderPreview(); validateAllData();
+                }
+            }
+        }
+
+        function deleteOption(catId, treatId, optId) {
+            if(appState.isReadOnly) return;
+            const cat = appState.categories.find(c => c.id === catId);
+            if(cat) {
+                const treat = cat.treatments.find(t => t.id === treatId);
+                if(treat) {
+                    treat.options = treat.options.filter(o => o.id !== optId);
+                    renderEditor(); renderPreview(); validateAllData();
+                }
+            }
+        }
+
+        function renderEditor() {
+            const container = document.getElementById('categoryContainer');
+            container.innerHTML = '';
+            const roAttr = appState.isReadOnly ? 'disabled' : '';
+
+            appState.categories.forEach((cat, idx) => {
+                const isCatNameErr = !cat.name || cat.name.trim() === '';
+                const catEl = document.createElement('div');
+                catEl.className = `bg-white border border-gray-200 shadow-sm transition-all overflow-hidden ${cat.isCollapsed ? 'rounded-md' : 'rounded-lg'}`;
+                catEl.ondragover = (e) => handleDragOver(e);
+                catEl.ondrop = (e) => handleDrop(e, 'category', null, idx);
+                
+                let treatmentsHTML = '';
+                if(cat.treatments) {
+                    cat.treatments.forEach((treat, tIdx) => {
+                        const isTreatNameErr = !treat.name || treat.name.trim() === '';
+                        let optionsHTML = '';
+                        if(cat.type === '일반 카테고리' && treat.options) {
+                            treat.options.forEach((opt, oIdx) => {
+                                const isOptNameErr = !opt.name || opt.name.trim() === '';
+                                
+                                let p1 = Number(opt.price1) || 0;
+                                let fp = Number(opt.finalPrice) || 0;
+                                let curPriceType = opt.priceType || '더블 할인';
+
+                                let isFpErr = curPriceType !== '원내 문의' && (opt.finalPrice === '' || opt.finalPrice === undefined || isNaN(opt.finalPrice));
+                                let isP1Err = curPriceType === '더블 할인' && (opt.price1 === '' || opt.price1 === undefined || isNaN(opt.price1) || opt.price1 <= opt.finalPrice);
+
+                                let regPrice = 0;
+                                if (curPriceType === '일반 할인') {
+                                    regPrice = fp > 0 ? Math.round(fp / 0.51) : 0;
+                                } else {
+                                    regPrice = p1 > 0 ? Math.round(p1 / 0.51) : 0;
+                                }
+
+                                let discountRate = 0;
+                                if (p1 > 0 && fp > 0 && p1 > fp) {
+                                    discountRate = Math.round(((p1 - fp) / p1) * 100);
+                                    if (discountRate > 34) isP1Err = true;
+                                }
+
+                                let priceBoxHTML = '';
+                                if (curPriceType === '일반 할인') {
+                                    priceBoxHTML = `
+                                        <div class="grid grid-cols-2 gap-3 mb-3">
+                                            <div>
+                                                <label class="label-text">정가(49% 자동 반영) <span class="req">*</span></label>
+                                                <input type="text" class="input-field font-medium bg-gray-100" value="${regPrice > 0 ? regPrice.toLocaleString() : ''}" placeholder="0" disabled>
+                                            </div>
+                                            <div>
+                                                <label class="label-text">최종 할인가 <span class="req">*</span></label>
+                                                <input type="text" class="input-field font-extrabold text-[14px] text-gray-900 tracking-tight ${isFpErr ? 'input-error' : ''}" value="${formatNumberWithComma(opt.finalPrice)}" placeholder="예: 70,000" oninput="updateOptionPriceInput(${cat.id}, ${treat.id}, ${opt.id}, 'finalPrice', this)" ${roAttr}>
+                                            </div>
+                                        </div>
+                                    `;
+                                } else if (curPriceType === '원내 문의') {
+                                    priceBoxHTML = `
+                                        <div class="mb-3 bg-gray-50 border border-gray-200 rounded-md p-3 flex items-center justify-between">
+                                            <span class="text-xs font-semibold text-gray-600">가격 정보 대신 "원내 문의" 문구가 표기됩니다.</span>
+                                            <span class="px-2.5 py-1 bg-red-100 text-red-600 text-xs font-bold rounded">원내 문의 설정됨</span>
+                                        </div>
+                                    `;
+                                } else {
+                                    priceBoxHTML = `
+                                        <div class="grid grid-cols-4 gap-3 mb-3">
+                                            <div>
+                                                <label class="label-text">정가(49% 자동 반영) <span class="req">*</span></label>
+                                                <input type="text" class="input-field font-medium bg-gray-100" value="${regPrice > 0 ? regPrice.toLocaleString() : ''}" placeholder="0" disabled>
+                                            </div>
+                                            <div>
+                                                <label class="label-text">1차 할인가 <span class="req">*</span></label>
+                                                <input type="text" class="input-field font-medium text-gray-900 ${isP1Err ? 'input-error' : ''}" value="${formatNumberWithComma(opt.price1)}" placeholder="예: 70,000" oninput="updateOptionPriceInput(${cat.id}, ${treat.id}, ${opt.id}, 'price1', this)" ${roAttr}>
+                                            </div>
+                                            <div>
+                                                <label class="label-text">추가 할인 <span class="req">*</span></label>
+                                                <div class="relative flex items-center">
+                                                    <input type="text" class="input-field pr-6 font-medium text-gray-900 bg-gray-50" value="${discountRate}" disabled>
+                                                    <span class="absolute right-3 text-gray-600 text-sm font-bold">%</span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="label-text">최종 할인가 <span class="req">*</span></label>
+                                                <input type="text" class="input-field font-extrabold text-[14px] text-gray-900 tracking-tight ${isFpErr ? 'input-error' : ''}" value="${formatNumberWithComma(opt.finalPrice)}" placeholder="예: 56,000" oninput="updateOptionPriceInput(${cat.id}, ${treat.id}, ${opt.id}, 'finalPrice', this)" ${roAttr}>
+                                            </div>
+                                        </div>
+                                    `;
+                                }
+
+                                optionsHTML += `
+                                    <div class="bg-white border border-gray-200 rounded-md p-4 mb-3">
+                                        <div class="flex justify-between items-center mb-3">
+                                            <span class="text-sm font-extrabold text-brand">옵션 ${oIdx + 1}</span>
+                                            ${!appState.isReadOnly ? `
+                                                <button onclick="deleteOption(${cat.id}, ${treat.id}, ${opt.id})" class="text-gray-400 hover:text-red-500 transition-colors p-1" title="옵션 삭제">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            ` : ''}
+                                        </div>
+                                        
+                                        <!-- 브랜드 옵션명 / 가격방식 / 추가 혜택 강조 한 줄 배치 -->
+                                        <div class="flex items-start gap-3 mb-3">
+                                            <div class="flex-[4] min-w-0">
+                                                <label class="label-text">브랜드·옵션명 <span class="req">*</span></label>
+                                                <textarea class="textarea-field font-medium ${isOptNameErr ? 'input-error' : ''}" rows="1" placeholder="브랜드·옵션명 입력" onfocus="autoResize(this)" onblur="this.style.height=''; this.scrollTop=0;" oninput="autoResize(this); updateStatePreviewOnly('opt', [${cat.id}, ${treat.id}, ${opt.id}], 'name', this.value)" onchange="renderEditor()" ${roAttr}>${opt.name}</textarea>
+                                                <span class="hint-text">Enter로 줄을 나눌 수 있습니다.</span>
+                                            </div>
+                                            
+                                            <div class="flex-[2.5] min-w-0 custom-select-wrapper">
+                                                <label class="label-text">가격 방식</label>
+                                                <div class="relative w-full">
+                                                    <button type="button" onclick="toggleDropdown('opt-price-${opt.id}')" class="input-field flex items-center justify-between w-full bg-white cursor-pointer hover:bg-gray-50 text-[13.5px] text-gray-900" ${roAttr}>
+                                                        <span>${curPriceType}</span>
+                                                        <svg class="w-4 h-4 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7"></path></svg>
+                                                    </button>
+                                                    <div id="opt-price-${opt.id}" class="hidden absolute left-0 top-full mt-1 w-full bg-[#F8FAFC] border border-gray-300 rounded-md shadow-lg z-50 p-1 dropdown-menu">
+                                                        <div onclick="updateStateAndRenderAll('opt', [${cat.id}, ${treat.id}, ${opt.id}], 'priceType', '일반 할인')" class="cursor-pointer flex justify-between items-center px-3 py-2 rounded ${curPriceType === '일반 할인' ? 'bg-white font-medium text-[#111827]' : 'text-gray-700 hover:bg-gray-200/50'} text-sm">
+                                                            <span>일반 할인</span>
+                                                            <svg class="w-4 h-4 check-icon ${curPriceType === '일반 할인' ? 'block' : 'hidden'} text-[#111827]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                                        </div>
+                                                        <div onclick="updateStateAndRenderAll('opt', [${cat.id}, ${treat.id}, ${opt.id}], 'priceType', '더블 할인')" class="cursor-pointer flex justify-between items-center px-3 py-2 rounded ${curPriceType === '더블 할인' ? 'bg-white font-medium text-[#111827]' : 'text-gray-700 hover:bg-gray-200/50'} mt-1 text-sm">
+                                                            <span>더블 할인</span>
+                                                            <svg class="w-4 h-4 check-icon ${curPriceType === '더블 할인' ? 'block' : 'hidden'} text-[#111827]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                                        </div>
+                                                        <div onclick="updateStateAndRenderAll('opt', [${cat.id}, ${treat.id}, ${opt.id}], 'priceType', '원내 문의')" class="cursor-pointer flex justify-between items-center px-3 py-2 rounded ${curPriceType === '원내 문의' ? 'bg-white font-medium text-[#111827]' : 'text-gray-700 hover:bg-gray-200/50'} mt-1 text-sm">
+                                                            <span>원내 문의</span>
+                                                            <svg class="w-4 h-4 check-icon ${curPriceType === '원내 문의' ? 'block' : 'hidden'} text-[#111827]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex-[5.5] min-w-0">
+                                                <label class="label-text">추가 혜택 강조</label>
+                                                <div class="flex items-center gap-2 h-[36px]">
+                                                    <div class="flex items-center gap-1.5 cursor-pointer shrink-0" onclick="updateStateAndRenderAll('opt', [${cat.id}, ${treat.id}, ${opt.id}], 'benefitEnabled', ${!opt.benefitEnabled})">
+                                                        <div class="w-4 h-4 rounded border transition-all flex items-center justify-center shrink-0 ${opt.benefitEnabled ? 'bg-[#008F89] border-[#008F89]' : 'bg-white border-gray-300'}">
+                                                            ${opt.benefitEnabled ? '<svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>' : ''}
+                                                        </div>
+                                                        <span class="text-xs font-semibold text-gray-700 select-none whitespace-nowrap">적용</span>
+                                                    </div>
+                                                    
+                                                    ${opt.benefitEnabled ? `
+                                                        <div class="flex-1 grid grid-cols-2 gap-1.5 min-w-0">
+                                                            <input type="text" class="input-field text-xs bg-white border-gray-300 px-2" placeholder="조건 문구" value="${opt.benefitCond || ''}" oninput="updateStatePreviewOnly('opt', [${cat.id}, ${treat.id}, ${opt.id}], 'benefitCond', this.value)" onchange="renderEditor()">
+                                                            <input type="text" class="input-field text-xs bg-white border-gray-300 font-semibold px-2" placeholder="혜택 문구" value="${opt.benefitText || ''}" oninput="updateStatePreviewOnly('opt', [${cat.id}, ${treat.id}, ${opt.id}], 'benefitText', this.value)" onchange="renderEditor()">
+                                                        </div>
+                                                    ` : `
+                                                        <span class="text-xs text-gray-400 font-normal">체크 시 옵션별 추가 혜택 문구를 설정합니다.</span>
+                                                    `}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        ${priceBoxHTML}
+                                    </div>
+                                `;
+                            });
+                        }
+
+                        if (cat.type === '일반 카테고리') {
+                            treatmentsHTML += `
+                                <div class="border border-gray-200 rounded-lg bg-white mb-3 p-4 shadow-sm flex gap-3 relative"
+                                     ondragover="handleDragOver(event)"
+                                     ondrop="handleDrop(event, 'treatment', ${cat.id}, ${tIdx})">
+                                     
+                                    <div class="flex flex-col border border-[#E5E7EB] rounded-md w-[32px] shrink-0 overflow-hidden shadow-sm h-fit cursor-grab"
+                                         draggable="true"
+                                         ondragstart="handleDragStart(event, 'treatment', ${cat.id}, ${tIdx})"
+                                         ondragend="handleDragEnd(event)"
+                                         onclick="event.stopPropagation()">
+                                        <div class="h-[26px] w-full flex items-center justify-center bg-[#F8FAFC]">
+                                            <span class="text-[12px] font-extrabold text-brand">${tIdx + 1}</span>
+                                        </div>
+                                        <div class="w-full h-[1px] bg-[#E5E7EB]"></div>
+                                        <div class="h-[26px] w-full flex items-center justify-center bg-white hover:bg-gray-50 transition-colors">
+                                            <svg class="w-4 h-4 text-[#9CA3AF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 6h16M4 12h16M4 18h16"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex-1 min-w-0 pr-4">
+                                        ${!appState.isReadOnly ? `
+                                            <button onclick="deleteTreatment(${cat.id}, ${treat.id})" class="absolute right-4 top-4 text-gray-400 hover:text-red-500 transition-colors p-1" title="시술 삭제">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        ` : ''}
+
+                                        <div class="flex gap-4 mb-2 pr-10">
+                                            <div class="flex-[3]">
+                                                <label class="label-text text-gray-800">시술명 <span class="req">*</span></label>
+                                                <textarea class="textarea-field font-semibold text-[15px] ${isTreatNameErr ? 'input-error' : ''}" rows="1" placeholder="시술명 입력" onfocus="autoResize(this)" onblur="this.style.height=''; this.scrollTop=0;" oninput="autoResize(this); updateStatePreviewOnly('treat', [${cat.id}, ${treat.id}], 'name', this.value)" onchange="renderEditor()" ${roAttr}>${treat.name}</textarea>
+                                                <span class="hint-text">Enter로 줄을 나눌 수 있습니다.</span>
+                                            </div>
+                                            <div class="flex-[2]">
+                                                <label class="label-text text-gray-800">설명</label>
+                                                <textarea class="textarea-field" rows="1" placeholder="설명 입력" onfocus="autoResize(this)" onblur="this.style.height=''; this.scrollTop=0;" oninput="autoResize(this); updateStatePreviewOnly('treat', [${cat.id}, ${treat.id}], 'desc', this.value)" onchange="renderEditor()" ${roAttr}>${treat.desc || ''}</textarea>
+                                                <span class="hint-text">Enter로 줄을 나눌 수 있습니다.</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="border border-[#E2E8F0] rounded-md bg-[#F8FAFC] mt-3">
+                                            <div class="px-5 py-3 flex justify-between items-center cursor-pointer hover:bg-[#F1F5F9] transition-colors ${treat.isCollapsed ? 'rounded-md' : 'rounded-t-md'}" onclick="toggleTreatment(${cat.id}, ${treat.id})">
+                                                <div class="flex items-center gap-2.5">
+                                                    <span class="font-extrabold text-sm text-gray-900 tracking-tight">브랜드·옵션별 가격</span>
+                                                    <span class="bg-[#E6F4F3] text-brand px-2.5 py-0.5 rounded-full text-xs font-bold tracking-tight">${treat.options ? treat.options.length : 0}개 옵션</span>
+                                                </div>
+                                                <svg class="w-5 h-5 text-gray-500 transition-transform duration-200 ${treat.isCollapsed ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"></path></svg>
+                                            </div>
+                                            
+                                            <div class="px-4 pb-4 pt-2 border-t border-gray-200 border-dashed ${treat.isCollapsed ? 'hidden' : 'block'}">
+                                                <div class="mt-2">
+                                                    ${optionsHTML}
+                                                </div>
+                                                
+                                                ${!appState.isReadOnly ? `
+                                                    <div class="flex justify-end mt-2">
+                                                        <button onclick="addOption(${cat.id}, ${treat.id})" class="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-bold text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                                                            가격 옵션 추가
+                                                        </button>
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            treatmentsHTML += `
+                                <div class="border border-gray-200 rounded-lg bg-white mb-3 p-4 shadow-sm flex gap-3 relative cursor-pointer" 
+                                     ondragover="handleDragOver(event)"
+                                     ondrop="handleDrop(event, 'treatment', ${cat.id}, ${tIdx})"
+                                     onclick="if(!['TEXTAREA','INPUT'].includes(event.target.tagName)) toggleTreatment(${cat.id}, ${treat.id});">
+                                    
+                                    <div class="flex flex-col border border-[#E5E7EB] rounded-md w-[32px] shrink-0 overflow-hidden shadow-sm h-fit mt-1 cursor-grab"
+                                         draggable="true"
+                                         ondragstart="handleDragStart(event, 'treatment', ${cat.id}, ${tIdx})"
+                                         ondragend="handleDragEnd(event)"
+                                         onclick="event.stopPropagation()">
+                                        <div class="h-[26px] w-full flex items-center justify-center bg-white hover:bg-gray-50 transition-colors">
+                                            <svg class="w-4 h-4 text-[#9CA3AF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 6h16M4 12h16M4 18h16"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="w-full h-[1px] bg-[#E5E7EB]"></div>
+                                        <div class="h-[26px] w-full flex items-center justify-center bg-[#F8FAFC]">
+                                            <span class="text-[12px] font-extrabold text-brand">${tIdx + 1}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex-1 min-w-0 pr-8">
+                                        <div class="absolute right-4 top-4 flex flex-col items-center gap-2 z-10">
+                                            <button onclick="toggleTreatment(${cat.id}, ${treat.id}); event.stopPropagation();" class="text-gray-400 hover:text-gray-700 transition-colors p-1" title="접기/펼치기">
+                                                <svg class="w-5 h-5 transition-transform duration-200 ${treat.isCollapsed ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"></path></svg>
+                                            </button>
+                                            ${!appState.isReadOnly ? `
+                                                <button onclick="deleteTreatment(${cat.id}, ${treat.id}); event.stopPropagation();" class="text-gray-400 hover:text-red-500 transition-colors p-1" title="시술 삭제">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            ` : ''}
+                                        </div>
+
+                                        <div class="grid grid-cols-12 gap-4 ${treat.isCollapsed ? '' : 'mb-3'}">
+                                            <div class="col-span-7">
+                                                <label class="label-text text-gray-800">시술명 <span class="req">*</span></label>
+                                                <textarea class="textarea-field font-semibold text-[15px] ${isTreatNameErr ? 'input-error' : ''}" rows="1" placeholder="시술명 입력" onfocus="autoResize(this)" onblur="this.style.height=''; this.scrollTop=0;" oninput="autoResize(this); updateStatePreviewOnly('treat', [${cat.id}, ${treat.id}], 'name', this.value)" onchange="renderEditor()" ${roAttr}>${treat.name}</textarea>
+                                                <span class="hint-text">Enter로 줄을 나눌 수 있습니다.</span>
+                                            </div>
+                                            <div class="col-span-5">
+                                                <label class="label-text text-gray-800">설명</label>
+                                                <textarea class="textarea-field" rows="1" placeholder="선택 입력" onfocus="autoResize(this)" onblur="this.style.height=''; this.scrollTop=0;" oninput="autoResize(this); updateStatePreviewOnly('treat', [${cat.id}, ${treat.id}], 'desc', this.value)" onchange="renderEditor()" ${roAttr}>${treat.desc || ''}</textarea>
+                                                <span class="hint-text">Enter로 줄을 나눌 수 있습니다.</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="${treat.isCollapsed ? 'hidden' : 'block'}">
+                                            <div class="bg-[#F2F9F9] rounded-md px-4 py-2 mb-3">
+                                                <p class="text-xs text-[#64748B] font-medium">시술 항목을 선택하면 카테고리 가격이 자동 연동됩니다.</p>
+                                            </div>
+
+                                            <hr class="border-dashed border-gray-200 my-3">
+                                            
+                                            <div class="flex items-center gap-3">
+                                                <div class="flex items-center gap-2 cursor-pointer shrink-0" onclick="updateStateAndRenderAll('treat', [${cat.id}, ${treat.id}], 'benefitEnabled', ${!treat.benefitEnabled}); event.stopPropagation();">
+                                                    <div class="w-4 h-4 rounded border transition-all flex items-center justify-center shrink-0 ${treat.benefitEnabled ? 'bg-[#008F89] border-[#008F89]' : 'bg-white border-gray-300'}">
+                                                        ${treat.benefitEnabled ? '<svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>' : ''}
+                                                    </div>
+                                                    <span class="text-sm font-medium text-gray-700 select-none whitespace-nowrap">추가 혜택 강조</span>
+                                                </div>
+                                                
+                                                ${treat.benefitEnabled ? `
+                                                    <div class="flex-1 grid grid-cols-2 gap-3 min-w-0">
+                                                        <div>
+                                                            <input type="text" class="input-field h-8 text-xs bg-white border-gray-300" placeholder="조건 문구" value="${treat.benefitCond || ''}" oninput="updateStatePreviewOnly('treat', [${cat.id}, ${treat.id}], 'benefitCond', this.value)" onchange="renderEditor()">
+                                                        </div>
+                                                        <div>
+                                                            <input type="text" class="input-field h-8 text-xs bg-white border-gray-300 font-semibold" placeholder="혜택 문구" value="${treat.benefitText || ''}" oninput="updateStatePreviewOnly('treat', [${cat.id}, ${treat.id}], 'benefitText', this.value)" onchange="renderEditor()">
+                                                        </div>
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+                }
+
+                let catPriceBoxHTML = '';
+                if (cat.type === '가격형 카테고리') {
+                    let catPriceErr = (!cat.catPrice || isNaN(cat.catPrice));
+                    let catRegPrice = cat.catPrice > 0 ? Math.round(cat.catPrice / 0.51) : 0;
+                    
+                    catPriceBoxHTML = `
+                        <div class="border border-[#008F89] rounded-lg p-4 bg-[#F4FBFB] mb-5 shadow-sm">
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-extrabold text-lg leading-none text-[#008F89]">%</span>
+                                    <span class="font-bold text-gray-900 text-[14px]">카테고리 가격</span>
+                                    <span class="text-xs text-gray-400 font-medium">선택한 시술마다 동일한 카테고리 가격이 연동됩니다.</span>
+                                </div>
+                                <span class="text-xs text-gray-400 font-medium tracking-tight">가격 연동</span>
+                            </div>
+                            
+                            <div class="grid grid-cols-12 gap-4">
+                                <div class="col-span-5">
+                                    <label class="label-text text-gray-700">정가 · 49% 자동 반영 <span class="req">*</span></label>
+                                    <input type="text" class="input-field bg-white/60 text-gray-500 font-medium" value="${catRegPrice > 0 ? catRegPrice.toLocaleString() : ''}" disabled>
+                                </div>
+                                <div class="col-span-4">
+                                    <label class="label-text text-gray-700">할인가 <span class="req">*</span></label>
+                                    <input type="text" class="input-field bg-white font-extrabold text-gray-900 ${catPriceErr ? 'input-error' : ''}" value="${formatNumberWithComma(cat.catPrice)}" oninput="updateCatPriceInput(${cat.id}, this)" ${roAttr}>
+                                </div>
+                                <div class="col-span-3 relative custom-select-wrapper">
+                                    <label class="label-text text-gray-700">부가세</label>
+                                    <button type="button" onclick="toggleDropdown('cat-tax-${cat.id}')" class="input-field flex items-center justify-between w-full bg-white cursor-pointer hover:bg-gray-50 text-sm text-gray-900" ${roAttr}>
+                                        <span>${cat.catTaxType || '별도'}</span>
+                                        <svg class="w-4 h-4 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const isBenefitActive = !!((cat.benefitType === '추가 할인' ? cat.benefitDiscount : cat.benefitText) || cat.benefitCondition);
+                const isBenefitCollapsed = cat.isBenefitCollapsed !== false;
+
+                let catBenefitBoxHTML = `
+                    <div class="bg-[#F2F9F9] rounded-md mb-5 border border-gray-200 overflow-hidden transition-all">
+                        <div class="px-4 py-3 flex justify-between items-center cursor-pointer select-none hover:bg-[#EBF5F5]" onclick="toggleCatBenefitAccordion(${cat.id})">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg>
+                                <span class="text-[13.5px] font-bold text-gray-900">카테고리 혜택 강조</span>
+                                ${isBenefitActive ? `<span class="bg-[#008F89] text-white px-2 py-0.5 rounded text-[10px] font-bold ml-1">작성됨</span>` : `<span class="text-gray-400 text-[11px] font-normal ml-1">(미작성)</span>`}
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs text-gray-400">${isBenefitCollapsed ? '펼치기' : '접기'}</span>
+                                <svg class="w-4 h-4 text-gray-500 transition-transform duration-200 ${isBenefitCollapsed ? '' : 'rotate-180'}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
+                        
+                        <div class="px-4 pb-4 pt-1 border-t border-gray-200/60 bg-white ${isBenefitCollapsed ? 'hidden' : 'block'}">
+                            <div class="grid grid-cols-12 gap-3 items-end mt-2">
+                                <div class="col-span-3 relative custom-select-wrapper">
+                                    <label class="label-text text-[11px] mb-1">혜택 유형</label>
+                                    <button type="button" onclick="toggleDropdown('cat-benefit-${cat.id}')" class="input-field h-[34px] flex items-center justify-between w-full bg-white cursor-pointer hover:bg-gray-50 text-[12.5px] text-gray-900" ${roAttr}>
+                                        <span>${cat.benefitType || '추가 문구'}</span>
+                                        <svg class="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div id="cat-benefit-${cat.id}" class="hidden absolute left-0 top-full mt-1 w-full bg-[#F8FAFC] border border-gray-300 rounded-md shadow-lg z-50 p-1 dropdown-menu">
+                                        <div onclick="updateStateAndRenderAll('cat', [${cat.id}], 'benefitType', '추가 문구')" class="cursor-pointer flex justify-between items-center px-2 py-1.5 rounded text-[12px]">
+                                            <span>추가 문구</span>
+                                        </div>
+                                        <div onclick="updateStateAndRenderAll('cat', [${cat.id}], 'benefitType', '추가 할인')" class="cursor-pointer flex justify-between items-center px-2 py-1.5 rounded mt-0.5 text-[12px]">
+                                            <span>추가 할인</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-span-5">
+                                    <label class="label-text text-[11px] mb-1">조건 문구</label>
+                                    <input type="text" class="input-field h-[34px] text-[12.5px] px-2 bg-white border-gray-200" placeholder="예: 동일 부위 10회 결제 시" value="${cat.benefitCondition || ''}" oninput="updateStatePreviewOnly('cat', [${cat.id}], 'benefitCondition', this.value)" onchange="renderEditor()" ${roAttr}>
+                                </div>
+                                <div class="col-span-4">
+                                    ${(cat.benefitType || '추가 문구') === '추가 문구' ? `
+                                        <label class="label-text text-[11px] mb-1">혜택 문구</label>
+                                        <input type="text" class="input-field h-[34px] text-[12.5px] px-2 bg-white border-gray-200" placeholder="예: +스킨부스터 더 드림" value="${cat.benefitText || ''}" oninput="updateStatePreviewOnly('cat', [${cat.id}], 'benefitText', this.value)" onchange="renderEditor()" ${roAttr}>
+                                    ` : `
+                                        <label class="label-text text-[11px] mb-1">추가 할인(%)</label>
+                                        <input type="number" class="input-field h-[34px] text-[12.5px] px-2 bg-white border-gray-200" placeholder="20" value="${cat.benefitDiscount || 0}" oninput="updateStatePreviewOnly('cat', [${cat.id}], 'benefitDiscount', Number(this.value))" onchange="renderEditor()" ${roAttr}>
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                catEl.innerHTML = `
+                    <div class="px-5 py-3.5 flex justify-between items-center bg-[#F2F9F9] border-b border-gray-200 cursor-pointer hover:bg-[#EBF5F5] transition-colors ${cat.isCollapsed ? 'rounded-lg' : 'rounded-t-lg'}" onclick="toggleCategory(${cat.id})">
+                        <div class="flex items-center gap-3 flex-1 min-w-0 pr-4">
+                            <svg class="w-5 h-5 text-gray-400 cursor-grab shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" draggable="true" ondragstart="handleDragStart(event, 'category', null, ${idx})" ondragend="handleDragEnd(event)" onclick="event.stopPropagation()"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                            <span class="text-[#008F89] font-extrabold text-[16px] tracking-tight shrink-0">0${idx + 1}</span>
+                            <span class="font-extrabold text-[16px] text-gray-900 tracking-tight truncate">${cat.name || '새 카테고리'}</span>
+                            <span class="px-2.5 py-0.5 rounded-full bg-white border border-gray-200 text-xs font-bold text-gray-500 shadow-sm flex items-center justify-center leading-none h-6 whitespace-nowrap shrink-0 ml-1">${cat.type === '일반 카테고리' ? '일반형' : '가격형'}</span>
+                        </div>
+                        
+                        <div class="flex items-center gap-1 text-gray-500 shrink-0" onclick="event.stopPropagation()">
+                            <button onclick="toggleCategory(${cat.id})" class="p-2 hover:text-gray-900 hover:bg-gray-200/60 rounded transition-colors" title="${cat.isCollapsed ? '펼치기' : '접기'}">
+                                <svg class="w-4 h-4 transition-transform duration-200 ${cat.isCollapsed ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"></path></svg>
+                            </button>
+                            ${!appState.isReadOnly ? `
+                                <button onclick="copyCategory(${cat.id})" class="p-2 hover:text-[#008F89] hover:bg-gray-200/60 rounded transition-colors" title="복사">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                </button>
+                                <button onclick="deleteCategory(${cat.id})" class="p-2 hover:text-red-500 hover:bg-gray-200/60 rounded transition-colors" title="삭제">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="p-5 bg-gray-50 ${cat.isCollapsed ? 'hidden' : 'block'}">
+                        <div class="grid grid-cols-2 gap-5 mb-5">
+                            <div>
+                                <label class="label-text">카테고리명*</label>
+                                <input type="text" class="input-field font-semibold ${isCatNameErr ? 'input-error' : ''}" placeholder="카테고리명 입력" value="${cat.name}" oninput="updateStatePreviewOnly('cat', [${cat.id}], 'name', this.value)" onchange="renderEditor()" ${roAttr}>
+                            </div>
+                            <div class="relative custom-select-wrapper">
+                                <label class="label-text">카테고리 형식</label>
+                                <button type="button" onclick="toggleDropdown('cat-type-${cat.id}')" class="input-field flex items-center justify-between w-full bg-white cursor-pointer hover:bg-gray-50 text-sm text-gray-900" ${roAttr}>
+                                    <span>${cat.type === '일반 카테고리' ? '일반 카테고리' : '가격형 카테고리'}</span>
+                                    <svg class="w-4 h-4 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                                <div id="cat-type-${cat.id}" class="hidden absolute left-0 top-full mt-1 w-full bg-[#F8FAFC] border border-gray-300 rounded-md shadow-lg z-50 p-1 dropdown-menu">
+                                    <div onclick="updateStateAndRenderAll('cat', [${cat.id}], 'type', '일반 카테고리')" class="cursor-pointer flex justify-between items-center px-3 py-2 rounded ${cat.type === '일반 카테고리' ? 'bg-white font-medium text-[#111827]' : 'text-gray-700 hover:bg-gray-200/50'} text-sm">
+                                        <span>일반 카테고리</span>
+                                        <svg class="w-4 h-4 check-icon ${cat.type === '일반 카테고리' ? 'block' : 'hidden'} text-[#111827]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    </div>
+                                    <div onclick="updateStateAndRenderAll('cat', [${cat.id}], 'type', '가격형 카테고리')" class="cursor-pointer flex justify-between items-center px-3 py-2 rounded ${cat.type === '가격형 카테고리' ? 'bg-white font-medium text-[#111827]' : 'text-gray-700 hover:bg-gray-200/50'} mt-1 text-sm">
+                                        <span>가격형 카테고리</span>
+                                        <svg class="w-4 h-4 check-icon ${cat.type === '가격형 카테고리' ? 'block' : 'hidden'} text-[#111827]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${catPriceBoxHTML}
+                        ${catBenefitBoxHTML}
+
+                        <div class="flex justify-between items-center mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-bold text-gray-900">시술 목록</span>
+                                <span class="bg-[#E6F4F3] text-brand px-2.5 py-0.5 rounded-full text-xs font-bold tracking-tight">${cat.treatments ? cat.treatments.length : 0}개</span>
+                            </div>
+                        </div>
+
+                        ${treatmentsHTML}
+
+                        ${!appState.isReadOnly ? `
+                            <div class="flex justify-end mt-3">
+                                <button onclick="addTreatment(${cat.id})" class="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-bold text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
+                                    <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                                    시술 추가
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                container.appendChild(catEl);
+            });
+
+            setTimeout(() => {
+                document.querySelectorAll('.textarea-field').forEach(ta => {
+                    ta.style.height = 'auto';
+                    ta.style.height = ta.scrollHeight + 'px';
+                });
+            }, 10);
+        }
+
+        function formatShortDate(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                return `${parts[1]}.${parts[2]}`;
+            }
+            return dateStr;
+        }
+
+        function renderPreview() {
+            const preview = document.getElementById('previewContainer');
+            
+            const sDate = formatShortDate(appState.startDate);
+            const eDate = formatShortDate(appState.endDate);
+            const taxText = appState.taxType === '포함' ? 'VAT 포함' : 'VAT 별도';
+
+            if (appState.renderMode === 'print') {
+                preview.className = "flex flex-col gap-6 items-center w-full font-sans";
+                preview.style.boxShadow = 'none';
+                preview.style.border = 'none';
+                preview.style.background = 'transparent';
+                preview.innerHTML = '';
+
+                function createNewPage() {
+                    const page = document.createElement('div');
+                    page.className = "print-page-wrapper bg-white shadow-md border border-gray-300 flex flex-col shrink-0 relative overflow-hidden";
+                    page.style.width = '595px';
+                    page.style.height = '841px';
+                    page.style.padding = '16px';
+                    page.style.boxSizing = 'border-box';
+                    
+                    const headerHTML = `
+                        <div class="bg-[#008F89] text-white p-4 mb-4 shrink-0 rounded-[3px] relative">
+                            <div class="text-[10px] font-extrabold mb-1 tracking-wider">${sDate} - ${eDate}</div>
+                            <div class="flex justify-between items-end">
+                                <h2 class="text-[18px] font-extrabold leading-tight">${appState.eventName}</h2>
+                            </div>
+                            <div class="text-[10px] font-medium opacity-90 mt-1">${appState.branchName} 방문고객 대상 | ${taxText}</div>
+                            <div class="absolute right-4 top-1/2 -translate-y-1/2 w-[34px] h-[34px] rounded-full border-[1.5px] border-white/30"></div>
+                        </div>
+                    `;
+                    page.innerHTML = headerHTML;
+
+                    const content = document.createElement('div');
+                    content.className = "columns-2 gap-3 w-full";
+                    content.style.height = '690px'; 
+                    content.style.columnFill = 'auto';
+
+                    page.appendChild(content);
+                    return { page, content };
+                }
+
+                let current = createNewPage();
+                preview.appendChild(current.page);
+
+                appState.categories.forEach(cat => {
+                    let printTreatmentsHTML = '';
+                    if (cat.type === '일반 카테고리') {
+                        if (cat.treatments) {
+                            cat.treatments.forEach(treat => {
+                                let printOptionsHTML = '';
+                                if (treat.options) {
+                                    treat.options.forEach(opt => {
+                                        let p1 = Number(opt.price1) || 0;
+                                        let fp = Number(opt.finalPrice) || 0;
+                                        let curPriceType = opt.priceType || '더블 할인';
+                                        
+                                        let regPrice = 0;
+                                        if (curPriceType === '일반 할인') {
+                                            regPrice = fp > 0 ? Math.round(fp / 0.51) : 0;
+                                        } else {
+                                            regPrice = p1 > 0 ? Math.round(p1 / 0.51) : 0;
+                                        }
+
+                                        let optBenefitHTML = '';
+                                        if (opt.benefitEnabled && (opt.benefitCond || opt.benefitText)) {
+                                            optBenefitHTML = `
+                                                ${opt.benefitCond ? `<span class="text-[7.5px] text-[#9CA3AF] font-medium ml-1 shrink-0 leading-none">${opt.benefitCond}</span>` : ''}
+                                                ${opt.benefitText ? `<span class="bg-[#008F89] text-white font-bold px-1 py-[1.5px] rounded-[2px] text-[7px] ml-0.5 shrink-0 leading-none">${opt.benefitText}</span>` : ''}
+                                            `;
+                                        }
+
+                                        let printPriceDisplayHTML = '';
+                                        if (curPriceType === '원내 문의') {
+                                            printPriceDisplayHTML = `<span class="font-bold text-[#EF4444] text-[8.5px]">원내 문의</span>`;
+                                        } else if (curPriceType === '일반 할인') {
+                                            printPriceDisplayHTML = `
+                                                <del class="text-[6px] text-gray-400 mr-1">${regPrice > 0 ? regPrice.toLocaleString() + '원' : ''}</del>
+                                                <span class="font-bold text-[#EF4444] text-[8.5px]">${fp > 0 ? fp.toLocaleString() + '원' : ''}</span>
+                                            `;
+                                        } else {
+                                            printPriceDisplayHTML = `
+                                                <del class="text-[6px] text-gray-400 mr-1">${regPrice > 0 ? regPrice.toLocaleString() + '원' : ''}</del>
+                                                <span class="font-bold text-gray-800 text-[7.5px]">${p1 > 0 ? p1.toLocaleString() + '원' : ''}</span>
+                                                <svg class="w-2 h-2 text-[#9CA3AF] mx-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                                                <span class="font-bold text-[#EF4444] text-[8.5px]">${fp > 0 ? fp.toLocaleString() + '원' : ''}</span>
+                                            `;
+                                        }
+
+                                        printOptionsHTML += `
+                                            <div class="flex flex-col gap-1 py-1.5 border-b border-gray-100 last:border-none text-[8px]">
+                                                <div class="flex items-start flex-wrap gap-x-0.5 min-w-0 pr-1 break-words">
+                                                    <span class="font-medium text-gray-800 whitespace-pre-wrap leading-[1.2]">${opt.name}</span>
+                                                    ${optBenefitHTML}
+                                                </div>
+                                                <div class="flex items-center justify-end shrink-0 whitespace-nowrap">
+                                                    ${printPriceDisplayHTML}
+                                                </div>
+                                            </div>
+                                        `;
+                                    });
+                                }
+
+                                printTreatmentsHTML += `
+                                    <div class="mb-1.5 bg-gray-50/70 p-2 rounded border border-gray-100">
+                                        <p class="font-bold text-[9px] text-gray-900 border-b border-gray-200 pb-1 mb-1 whitespace-pre-wrap">${treat.name}</p>
+                                        ${printOptionsHTML}
+                                    </div>
+                                `;
+                            });
+                        }
+                    } else {
+                        let printTreatmentsList = '';
+                        if (cat.treatments) {
+                            cat.treatments.forEach(treat => {
+                                let treatBenefitHTML = '';
+                                if (treat.benefitEnabled && (treat.benefitCond || treat.benefitText)) {
+                                    treatBenefitHTML = `
+                                        ${treat.benefitCond ? `<span class="text-[7.5px] text-[#9CA3AF] font-medium ml-1 shrink-0 leading-none">${treat.benefitCond}</span>` : ''}
+                                        ${treat.benefitText ? `<span class="bg-[#008F89] text-white font-bold px-1 py-[1.5px] rounded-[2px] text-[7px] ml-0.5 shrink-0 leading-none">${treat.benefitText}</span>` : ''}
+                                    `;
+                                }
+
+                                printTreatmentsList += `
+                                    <li class="text-[9px] text-gray-700 py-1 border-b border-gray-100 last:border-none flex items-start flex-wrap gap-x-1">
+                                        <div class="flex items-start gap-1 min-w-0 flex-wrap break-words">
+                                            <span class="w-[3px] h-[3px] bg-[#008F89] rounded-full shrink-0 mt-[4px]"></span>
+                                            <span class="whitespace-pre-wrap leading-[1.3]">${treat.name}</span>
+                                            ${treatBenefitHTML}
+                                        </div>
+                                    </li>
+                                `;
+                            });
+                        }
+                        printTreatmentsHTML = `<ul class="flex flex-col">${printTreatmentsList}</ul>`;
+                    }
+
+                    const isBenefitActive = !!((cat.benefitType === '추가 할인' ? cat.benefitDiscount : cat.benefitText) || cat.benefitCondition);
+                    let printBenefitBadge = '';
+                    if(isBenefitActive) {
+                        if(cat.benefitType === '추가 할인') printBenefitBadge = `추가 ${cat.benefitDiscount}% 할인`;
+                        else printBenefitBadge = cat.benefitText || '추가혜택';
+                    }
+
+                    let catVatText = '(VAT ' + (cat.catTaxType || '별도') + ')';
+                    let headerRightContent = '';
+                    
+                    if (cat.type === '가격형 카테고리') {
+                        let catRegPrice = (cat.catPrice && cat.catPrice > 0) ? Math.round(cat.catPrice / 0.51) : 0;
+                        headerRightContent = `
+                            <div class="flex items-center gap-1.5">
+                                ${isBenefitActive ? `<span class="bg-white/20 text-white px-1.5 py-0.5 text-[8px] rounded mr-1">${printBenefitBadge}</span>` : ''}
+                                ${catRegPrice > 0 ? `<del class="text-[6px] text-white/70 font-medium">${catRegPrice.toLocaleString()}원</del>` : ''}
+                                <span class="text-[10px] font-extrabold">${(cat.catPrice || 0).toLocaleString()}원<span class="font-normal text-[7.5px] ml-0.5">${catVatText}</span></span>
+                            </div>
+                        `;
+                    } else if (isBenefitActive) {
+                        headerRightContent = `<span class="bg-white/20 text-white px-1.5 py-0.5 text-[8px] rounded">${printBenefitBadge}</span>`;
+                    }
+
+                    const catHTML = `
+                        <div class="bg-[#008F89] text-white px-3 py-1.5 text-[10.5px] font-bold flex justify-between items-center">
+                            <span>${cat.name}</span>
+                            ${headerRightContent}
+                        </div>
+                        <div class="px-2 py-1.5">
+                            ${printTreatmentsHTML}
+                        </div>
+                    `;
+
+                    let catEl = document.createElement('div');
+                    catEl.className = "border border-gray-200 rounded overflow-hidden bg-white mb-3 shadow-sm break-inside-avoid";
+                    catEl.style.breakInside = "avoid";
+                    catEl.innerHTML = catHTML;
+
+                    current.content.appendChild(catEl);
+
+                    if (current.content.scrollWidth > current.content.clientWidth) {
+                        current.content.removeChild(catEl);
+                        current = createNewPage();
+                        preview.appendChild(current.page);
+                        current.content.appendChild(catEl);
+                    }
+                });
+
+                const style = document.createElement('style');
+                style.textContent = `
+                    @media print {
+                        body * { visibility: hidden !important; }
+                        #previewContainer, #previewContainer * { visibility: visible !important; }
+                        #previewContainer {
+                            position: absolute; left: 0; top: 0;
+                            width: 100% !important; max-width: 100% !important;
+                            background: white !important;
+                            display: block !important;
+                            padding: 0 !important;
+                        }
+                        .print-page-wrapper {
+                            box-shadow: none !important;
+                            border: none !important;
+                            width: 100% !important;
+                            height: auto !important;
+                            min-height: 100vh;
+                            page-break-after: always;
+                            margin: 0 !important;
+                            padding: 10px !important;
+                        }
+                        .columns-2 {
+                            height: auto !important; 
+                        }
+                    }
+                `;
+                preview.appendChild(style);
+                return;
+            }
+
+            preview.style.boxShadow = '';
+            preview.style.border = '';
+            preview.style.background = '';
+            
+            if (appState.deviceMode === 'MO') {
+                preview.className = "preview-phone-container preview-mo flex flex-col font-sans bg-[#F3F4F6] w-full shrink-0";
+            } else {
+                preview.className = "preview-phone-container preview-pc flex flex-col font-sans bg-[#F3F4F6] w-full shrink-0";
+            }
+
+            let categoriesHTML = '';
+            appState.categories.forEach(cat => {
+                let treatmentsPreviewHTML = '';
+
+                if(cat.type === '일반 카테고리') {
+                    if(cat.treatments) {
+                        cat.treatments.forEach(treat => {
+                            let optionsPreviewHTML = '';
+                            if(treat.options) {
+                                treat.options.forEach(opt => {
+                                    let p1 = Number(opt.price1) || 0;
+                                    let fp = Number(opt.finalPrice) || 0;
+                                    let curPriceType = opt.priceType || '더블 할인';
+                                    
+                                    let regPrice = 0;
+                                    if (curPriceType === '일반 할인') {
+                                        regPrice = fp > 0 ? Math.round(fp / 0.51) : 0;
+                                    } else {
+                                        regPrice = p1 > 0 ? Math.round(p1 / 0.51) : 0;
+                                    }
+
+                                    let optBenefitHTML = '';
+                                    if (opt.benefitEnabled && (opt.benefitCond || opt.benefitText)) {
+                                        optBenefitHTML = `
+                                            ${opt.benefitCond ? `<span class="text-[8.5px] text-[#9CA3AF] font-medium ml-1 shrink-0 leading-none">${opt.benefitCond}</span>` : ''}
+                                            ${opt.benefitText ? `<span class="bg-[#008F89] text-white font-bold px-1 py-0.5 rounded-[2px] text-[8px] ml-0.5 shrink-0 leading-none">${opt.benefitText}</span>` : ''}
+                                        `;
+                                    }
+
+                                    let webPriceDisplayHTML = '';
+                                    if (curPriceType === '원내 문의') {
+                                        webPriceDisplayHTML = `<span class="text-[12px] font-bold text-[#EF4444] tracking-tight leading-none">원내 문의</span>`;
+                                    } else if (curPriceType === '일반 할인') {
+                                        webPriceDisplayHTML = `
+                                            <del class="text-[9px] text-[#A0AEC0] mr-1 shrink-0">${regPrice > 0 ? regPrice.toLocaleString() + '원' : ''}</del>
+                                            <span class="text-[13px] font-bold text-[#EF4444] tracking-tight leading-none">${fp > 0 ? fp.toLocaleString() + '<span class="text-[10px]">원</span>' : ''}</span>
+                                        `;
+                                    } else {
+                                        webPriceDisplayHTML = `
+                                            <del class="text-[9px] text-[#A0AEC0] mr-1 shrink-0">${regPrice > 0 ? regPrice.toLocaleString() + '원' : ''}</del>
+                                            <span class="text-[11.5px] font-bold text-gray-900 tracking-tight leading-none">${p1 > 0 ? p1.toLocaleString() + '<span class="text-[9.5px]">원</span>' : ''}</span>
+                                            <svg class="w-2.5 h-2.5 text-[#9CA3AF] mx-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                                            <span class="text-[13px] font-bold text-[#EF4444] tracking-tight leading-none">${fp > 0 ? fp.toLocaleString() + '<span class="text-[10px]">원</span>' : ''}</span>
+                                        `;
+                                    }
+
+                                    if (appState.deviceMode === 'MO') {
+                                        optionsPreviewHTML += `
+                                            <div class="bg-[#F8F9FA] rounded-[6px] px-3.5 py-2.5 flex flex-col gap-2 border border-transparent mt-1.5 w-full">
+                                                <div class="flex items-start gap-2 flex-1 min-w-0">
+                                                    <div class="w-3 h-3 rounded-[3px] border border-[#CBD5E1] bg-white shrink-0 mt-[3px]"></div>
+                                                    <div class="flex items-start flex-wrap gap-x-0.5 min-w-0 break-words">
+                                                        <span class="font-bold text-[9px] text-gray-800 leading-[1.3] shrink-0 whitespace-pre-wrap">${opt.name}</span>
+                                                        ${optBenefitHTML}
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-center justify-end shrink-0 whitespace-nowrap pt-1">
+                                                    ${webPriceDisplayHTML}
+                                                </div>
+                                            </div>
+                                        `;
+                                    } else {
+                                        optionsPreviewHTML += `
+                                            <div class="bg-[#F8F9FA] rounded-[6px] px-4 py-2.5 flex items-start justify-between border border-transparent mt-1.5 w-full gap-2">
+                                                <div class="flex items-start gap-2 flex-1 min-w-0">
+                                                    <div class="w-3.5 h-3.5 rounded-[3px] border border-[#CBD5E1] bg-white shrink-0 mt-[2px]"></div>
+                                                    <div class="flex items-start flex-wrap gap-x-0.5 min-w-0 break-words">
+                                                        <span class="font-bold text-[10px] text-gray-800 leading-[1.3] shrink-0 whitespace-pre-wrap">${opt.name}</span>
+                                                        ${optBenefitHTML}
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-center justify-end shrink-0 whitespace-nowrap">
+                                                    ${webPriceDisplayHTML}
+                                                </div>
+                                            </div>
+                                        `;
+                                    }
+                                });
+                            }
+
+                            treatmentsPreviewHTML += `
+                                <div class="px-2.5 py-3.5 border-b border-gray-100 last:border-none">
+                                    <div class="mb-2">
+                                        <h4 class="font-bold text-[12px] text-gray-900 tracking-tight leading-[1.3] whitespace-pre-wrap">${treat.name}</h4>
+                                        ${treat.desc ? `<div class="mt-1">` + treat.desc.split('\n').map(line => `<p class="text-[9.5px] text-gray-400 mt-0.5 leading-snug">${line}</p>`).join('') + `</div>` : ''}
+                                    </div>
+                                    <div class="flex flex-col w-full">
+                                        ${optionsPreviewHTML}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    const isBenefitActive = !!((cat.benefitType === '추가 할인' ? cat.benefitDiscount : cat.benefitText) || cat.benefitCondition);
+                    let webBenefitBadge = '';
+                    if(isBenefitActive) {
+                        if(cat.benefitType === '추가 할인') webBenefitBadge = `추가 ${cat.benefitDiscount}% 할인`;
+                        else webBenefitBadge = cat.benefitText || '추가혜택';
+                    }
+
+                    categoriesHTML += `
+                        <div class="mb-4 border border-gray-200 rounded-[8px] bg-white mx-3 shadow-sm p-1.5">
+                            <div class="bg-[#008F89] text-white px-3 py-2.5 rounded-[6px] flex justify-between items-center">
+                                <span class="text-[12px] font-bold leading-none">${cat.name}</span>
+                            </div>
+                            
+                            ${isBenefitActive ? `
+                                <div class="border-b border-gray-100 px-2.5 py-2.5 flex items-center gap-2 mx-1 mt-1">
+                                    <span class="font-bold text-gray-800 text-[10px] leading-none mt-[1px]">${cat.benefitCondition || '조건 적용'}</span>
+                                    <span class="bg-[#008F89] text-white font-bold px-2 py-1 rounded-[2px] text-[9px] shrink-0 leading-none">${webBenefitBadge}</span>
+                                </div>
+                            ` : ''}
+
+                            <div class="flex flex-col px-1.5 pt-1">
+                                ${treatmentsPreviewHTML}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    if(cat.treatments) {
+                        cat.treatments.forEach(treat => {
+                            let treatBenefitHTML = '';
+                            if (treat.benefitEnabled && (treat.benefitCond || treat.benefitText)) {
+                                treatBenefitHTML = `
+                                    ${treat.benefitCond ? `<span class="text-[8.5px] text-[#9CA3AF] font-medium ml-1 shrink-0 leading-none">${treat.benefitCond}</span>` : ''}
+                                    ${treat.benefitText ? `<span class="bg-[#008F89] text-white font-bold px-1.5 py-0.5 rounded-[2px] text-[8px] ml-0.5 shrink-0 leading-none">${treat.benefitText}</span>` : ''}
+                                `;
+                            }
+
+                            treatmentsPreviewHTML += `
+                                <div class="bg-[#F8F9FA] rounded-[6px] px-3.5 py-2 flex items-start gap-1.5 mb-2 border border-transparent w-full">
+                                    <div class="w-3 h-3 rounded-[2px] border border-[#CBD5E1] bg-white shrink-0 mt-[2px]"></div>
+                                    <div class="flex items-start flex-wrap gap-x-0.5 min-w-0 break-words">
+                                        <span class="font-semibold text-[10px] text-gray-700 leading-[1.3] pt-[1px] whitespace-pre-wrap">${treat.name}</span>
+                                        ${treatBenefitHTML}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    let catVatText = '(VAT ' + (cat.catTaxType || '별도') + ')';
+                    let headerRightContent = '';
+                    let catRegPrice = (cat.catPrice && cat.catPrice > 0) ? Math.round(cat.catPrice / 0.51) : 0;
+                    
+                    headerRightContent = `
+                        <div class="flex items-center gap-1.5">
+                            ${catRegPrice > 0 ? `<del class="text-[8.5px] text-white/70 font-medium leading-none mt-[2.5px]">${catRegPrice.toLocaleString()}원</del>` : ''}
+                            <span class="text-[13px] font-bold leading-none">${(cat.catPrice || 0).toLocaleString()}원<span class="font-normal text-[9px] ml-0.5">${catVatText}</span></span>
+                        </div>
+                    `;
+
+                    categoriesHTML += `
+                        <div class="mb-4 border border-gray-200 rounded-[8px] bg-white mx-3 shadow-sm p-1.5">
+                            <div class="bg-[#008F89] text-white px-3 py-2.5 rounded-[6px] flex justify-between items-center">
+                                <span class="text-[12px] font-bold leading-none">${cat.name}</span>
+                                ${headerRightContent}
+                            </div>
+                            <div class="px-1.5 py-3">
+                                <div class="flex flex-col w-full">
+                                    ${treatmentsPreviewHTML}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            preview.innerHTML = `
+                <div class="flex-1 pb-5 pt-4">
+                    ${categoriesHTML}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
